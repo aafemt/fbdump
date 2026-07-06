@@ -1,0 +1,6 @@
+build
+*.layout
+*.depend
+*.bak
+*.diff
+*.log

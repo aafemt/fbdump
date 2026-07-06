@@ -1,0 +1,4 @@
+*.bat	text eol=crlf
+*.h	text
+*.cpp	text
+*.cbp	text eol=lf
