@@ -169,7 +169,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 		};
 
-		Reader file(fileName, O_RDONLY);
+		Reader file(fileName, O_RDONLY | O_BINARY);
 
 		if (fileType == FileType::Unknown)
 		{

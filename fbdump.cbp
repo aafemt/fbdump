@@ -18,7 +18,6 @@
 					<Add option="-D_UNICODE" />
 				</Compiler>
 				<Linker>
-					<Add option="-s" />
 					<Add option="-municode" />
 					<Add option="-static-libgcc" />
 					<Add option="-static-libstdc++" />
@@ -30,6 +29,7 @@
 			<Add option="-Wshadow" />
 			<Add option="-Wextra" />
 			<Add option="-Wall" />
+			<Add option="-ggdb" />
 			<Add option="-fexceptions" />
 			<Add option="--std=c++17" />
 		</Compiler>

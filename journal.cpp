@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdexcept>
 #include <vector>
+#include <errno.h>
+#include <sys/stat.h>
 
 #include "journal.h"
 #include "static_exception.h"
@@ -22,7 +24,12 @@ namespace Journal
 
 	void dumpIt(Reader& file)
 	{
-		printf("Replication journal %s\n", to_string(file.fileName).c_str());
+		struct stat64 st{};
+		if (fstat64(file.f, &st) == -1)
+		{
+			fprintf(stderr, "fstat error %u\n", errno);
+		}
+		printf("Replication journal %s, length %llu\n", to_string(file.fileName).c_str(), st.st_size);
 		char signature[SignatureSize];
 		// Here we read separate pieces of header instead of whole one to handle different endianness
 		file.readBuffer(signature, SignatureSize);
