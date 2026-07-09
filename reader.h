@@ -12,6 +12,7 @@ struct Reader
 	unsigned char buffer[4 * 1024];
 	unsigned char* readPoint = buffer;
 	size_t dataSize = 0;
+	size_t bufferOffset = 0;
 	unsigned endianness = __BYTE_ORDER__;
 
 	Reader(const tstring& name, int flags);
@@ -28,4 +29,5 @@ struct Reader
 	void dumpTo(Dumper& dumper, size_t size);
 	void skip(size_t size);
 	bool eof();
+	size_t offset();
 };

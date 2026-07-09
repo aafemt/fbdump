@@ -20,6 +20,7 @@ Reader::~Reader()
 
 void Reader::readBuffer()
 {
+	bufferOffset += dataSize;
 	ssize_t r = read(f, buffer, sizeof(buffer));
 	if (r == -1)
 	{
@@ -137,4 +138,9 @@ bool Reader::eof()
 	readBuffer();
 	// read() returned 0, eof
 	return dataSize == 0;
+}
+
+size_t Reader::offset()
+{
+	return bufferOffset + (readPoint - buffer);
 }

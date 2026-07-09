@@ -1,6 +1,7 @@
 #define __USE_MINGW_ANSI_STDIO 1
 #include <stdio.h>
 #include <stdexcept>
+#include <sstream>
 #include <vector>
 #include <errno.h>
 #include <sys/stat.h>
@@ -95,6 +96,7 @@ namespace Journal
 		// Physical size of file can be bigger than size of data inside
 		while (length > 0)
 		{
+			size_t pos = file.offset();
 			uint64_t transactionNumber = file.getInt64();
 			uint16_t protocol = file.getInt16();
 			uint16_t flags = file.getInt16();
@@ -114,7 +116,7 @@ namespace Journal
 			{
 				printf("%sunknown flag", comma ? "," : "");
 			}
-			printf("), length: %u\n", blockLength);
+			printf("), length: %u, offset: %zu\n", blockLength, pos);
 
 			if (length < blockLength + sizeof(Block))
 			{
@@ -129,6 +131,7 @@ namespace Journal
 
 			while (blockLength > 0)
 			{
+				pos = file.offset();
 				const Operation op = static_cast<Operation>(file.getInt8());
 				size_t opLength = 1;
 				switch (op)
@@ -239,7 +242,7 @@ namespace Journal
 					{
 						uint32_t bidHigh = file.getInt32();
 						uint32_t bidLow = file.getInt32();
-						opLength += 8;
+						opLength += 8 + 2; // Include closing empty segment
 						printf("\tBlob with id (%x:%x)\n", bidHigh, bidLow);
 						while (uint16_t segmentLength = file.getInt16())
 						{
@@ -315,7 +318,7 @@ namespace Journal
 					}
 				default:
 					{
-						throw std::runtime_error(std::string("Unknown operation ") + std::to_string(op));
+						throw std::runtime_error(std::string("Unknown operation ") + std::to_string(op) + " at offset " + std::to_string(pos));
 					}
 				}
 				if (opLength > blockLength)
