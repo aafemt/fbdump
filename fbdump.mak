@@ -45,7 +45,7 @@ after_windows:
 windows: before_windows out_windows after_windows
 
 out_windows: before_windows $(OBJ_WINDOWS) $(DEP_WINDOWS)
-	$(LD) $(LIBDIR_WINDOWS) -o $(OUT_WINDOWS) $(OBJ_WINDOWS)  $(LDFLAGS_WINDOWS) -mwindows $(LIB_WINDOWS)
+	$(LD) $(LIBDIR_WINDOWS) -o $(OUT_WINDOWS) $(OBJ_WINDOWS)  $(LDFLAGS_WINDOWS) $(LIB_WINDOWS)
 
 $(OBJDIR_WINDOWS)\\detector.o: detector.cpp
 	$(CXX) $(CFLAGS_WINDOWS) $(INC_WINDOWS) -c detector.cpp -o $(OBJDIR_WINDOWS)\\detector.o
