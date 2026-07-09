@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 #include "tstring.h"
 #include "dumper.h"
 
