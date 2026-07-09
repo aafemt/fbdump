@@ -1,10 +1,6 @@
 name: CI Build
 
-on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+on: [push, pull_request]
 
 jobs:
   build-windows:
@@ -12,6 +8,15 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@main
-    - name: make
+    - name: Checkout
+      uses: actions/checkout@main
+    - name: Build
       run: make -f fbdump.mak windows
+    - name: Create artifact
+      uses: actions/upload-artifact@main
+      with:
+        name: windows-executable
+        path: build/fbdump.exe
+        overwrite: true
+        if-no-files-found: error
+
