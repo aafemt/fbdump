@@ -15,7 +15,7 @@ FileType detectFileType(Reader& file)
 			// Version 1, little endian
 			file.endianness = __ORDER_LITTLE_ENDIAN__;
 		}
-		else if (ver1 == 1 && ver2 == 0)
+		else if (ver1 == 0 && ver2 == 1)
 		{
 			// Version 1, big endian
 			file.endianness = __ORDER_BIG_ENDIAN__;
