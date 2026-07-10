@@ -69,21 +69,12 @@ void Reader::skip(size_t size)
 	}
 }
 
-extern bool verbose;
-
 void Reader::dumpTo(Dumper& dumper, size_t size)
 {
 	while (size > 0)
 	{
 		size_t chunk = std::min(size, dataLeft());
-		if (verbose)
-		{
-			dumper.dumpIt(readPoint, chunk);
-		}
-		else
-		{
-			// Just skip it
-		}
+		dumper.dumpIt(readPoint, chunk);
 		readPoint += chunk;
 		size -= chunk;
 	}

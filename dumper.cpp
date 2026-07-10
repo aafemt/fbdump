@@ -4,6 +4,11 @@
 
 #include "dumper.h"
 
+namespace
+{
+	static constexpr char alphabet[] = "0123456789ABCDEF";
+}
+
 HexDumper::HexDumper()
 {
 }
@@ -26,8 +31,6 @@ void HexDumper::clearString()
 
 void HexDumper::dumpIt(const unsigned char* buffer, size_t length)
 {
-	static constexpr char alphabet[] = "0123456789ABCDEF";
-
 	while (length > 0)
 	{
 		string[2 + pos * 3] = alphabet[*buffer >> 4];
@@ -50,5 +53,27 @@ void HexDumper::flush()
 		printf("\t\t%s\n", string);
 		clearString();
 		pos = 0;
+	}
+}
+
+void CompactHexDumper::dumpIt(const unsigned char* buffer, size_t length)
+{
+	char string[1024];
+	char* p = string;
+	while (length > 0)
+	{
+		*p++ = alphabet[*buffer >> 4];
+		*p++ = alphabet[*buffer & 0x0F];
+		if (p >= string + sizeof(string))
+		{
+			printf("%.1024s", string);
+			p = string;
+		}
+		++buffer;
+		--length;
+	}
+	if (p > string)
+	{
+		printf("%.*s", static_cast<int>(p - string), string);
 	}
 }

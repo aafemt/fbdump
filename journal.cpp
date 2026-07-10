@@ -5,9 +5,12 @@
 #include <vector>
 #include <errno.h>
 #include <sys/stat.h>
+#include <memory>
 
 #include "journal.h"
 #include "static_exception.h"
+
+extern bool verbose;
 
 namespace Journal
 {
@@ -191,8 +194,17 @@ namespace Journal
 						uint32_t dataLength = file.getInt32();
 						opLength += 4 + dataLength;
 						printf("\tInsert record into %s, data length %u\n", name.c_str(), dataLength);
-						HexDumper dumper;
-						file.dumpTo(dumper, dataLength);
+						if (verbose)
+						{
+							CompactHexDumper dumper;
+							printf("\t\t");
+							file.dumpTo(dumper, dataLength);
+							printf("\n");
+						}
+						else
+						{
+							file.skip(dataLength);
+						}
 						break;
 					}
 				case opUpdateRecord:
@@ -209,14 +221,32 @@ namespace Journal
 						}
 						uint32_t oldDataLength = file.getInt32();
 						opLength += 4 + oldDataLength;
-						printf("\tUpdate record in %s\n\t\tOld data length %u\n", name.c_str(), oldDataLength);
-						HexDumper dumper;
-						file.dumpTo(dumper, oldDataLength);
-						dumper.flush();
+						std::unique_ptr<unsigned char[]> oldData;
+						if (verbose)
+						{
+							oldData.reset(new unsigned char[oldDataLength]);
+							file.readBuffer(oldData.get(), oldDataLength);
+						}
+						else
+						{
+							file.skip(oldDataLength);
+						}
 						uint32_t newDataLength = file.getInt32();
 						opLength += 4 + newDataLength;
-						printf("\t\tNew data length %u\n", newDataLength);
-						file.dumpTo(dumper, newDataLength);
+						printf("\tUpdate record in %s, data length %u-%u\n", name.c_str(), oldDataLength, newDataLength);
+						if (verbose)
+						{
+							CompactHexDumper dumper;
+							printf("\t\t");
+							dumper.dumpIt(oldData.get(), oldDataLength);
+							printf("\n\t\t");
+							file.dumpTo(dumper, newDataLength);
+							printf("\n");
+						}
+						else
+						{
+							file.skip(newDataLength);
+						}
 						break;
 					}
 				case opDeleteRecord:
@@ -234,8 +264,17 @@ namespace Journal
 						uint32_t dataLength = file.getInt32();
 						opLength += 4 + dataLength;
 						printf("\tDelete record from %s, data length %u\n", name.c_str(), dataLength);
-						HexDumper dumper;
-						file.dumpTo(dumper, dataLength);
+						if (verbose)
+						{
+							CompactHexDumper dumper;
+							printf("\t\t");
+							file.dumpTo(dumper, dataLength);
+							printf("\n");
+						}
+						else
+						{
+							file.skip(dataLength);
+						}
 						break;
 					}
 				case opStoreBlob:
@@ -253,8 +292,15 @@ namespace Journal
 								fprintf(stderr, "Structure error: blob data length bigger than block length\n");
 								return;
 							}
-							HexDumper dumper;
-							file.dumpTo(dumper, segmentLength);
+							if (verbose)
+							{
+								HexDumper dumper;
+								file.dumpTo(dumper, segmentLength);
+							}
+							else
+							{
+								file.skip(segmentLength);
+							}
 						}
 						break;
 					}
@@ -265,8 +311,15 @@ namespace Journal
 						uint32_t sqlLength = file.getInt32();
 						opLength += 4 + 4 + sqlLength;
 						printf("\tExecute SQL as %s, length %u\n", userName.c_str(), sqlLength);
-						HexDumper dumper;
-						file.dumpTo(dumper, sqlLength);
+						if (verbose)
+						{
+							HexDumper dumper;
+							file.dumpTo(dumper, sqlLength);
+						}
+						else
+						{
+							file.skip(sqlLength);
+						}
 						break;
 					}
 				case opSetSequence:
@@ -302,8 +355,15 @@ namespace Journal
 						{
 							printf("\t\tSchema path: %s\n", atoms.get(atom).c_str());
 						}
-						HexDumper dumper;
-						file.dumpTo(dumper, sqlLength);
+						if (verbose)
+						{
+							HexDumper dumper;
+							file.dumpTo(dumper, sqlLength);
+						}
+						else
+						{
+							file.skip(sqlLength);
+						}
 						break;
 					}
 				case opDefineAtom:

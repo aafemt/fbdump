@@ -18,3 +18,8 @@ struct HexDumper : public Dumper
 	void dumpIt(const unsigned char* buffer, size_t length) override;
 	void flush();
 };
+
+struct CompactHexDumper : public Dumper
+{
+	void dumpIt(const unsigned char* buffer, size_t length) override;
+};

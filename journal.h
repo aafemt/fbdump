@@ -9,7 +9,7 @@ namespace Journal
 {
 	// From Firebird src/jrd/replication
 	constexpr size_t SignatureSize = 12;
-	constexpr const char* Signature = "FBCHANGELOG";
+	constexpr const char* Signature = "FBCHANGELOG\0";
 
 	enum SegmentState : unsigned short
 	{
