@@ -7,10 +7,12 @@
 #include <tchar.h>
 #include <locale.h>
 
+#include "fbinterface.h"
 #include "tstring.h"
 #include "reader.h"
 #include "detector.h"
 #include "journal.h"
+#include "status.h"
 
 void help()
 {
@@ -18,9 +20,9 @@ void help()
 			"Usage: fbdump [options] <file name>\n"
 			"Options:\n"
 			"\t-i\tNext parameter is a file (optional, useful if the file name starts with '-')\n"
-//			"\t-d\tNext parameter is a database connection string\n"
-//			"\t-u\tNext parameter is an user name\n"
-//			"\t-p\tNext parameter is a password\n"
+			"\t-d\tNext parameter is a database connection string\n"
+			"\t-u\tNext parameter is an user name\n"
+			"\t-p\tNext parameter is a password\n"
 			"\t-?,-h\tThis text\n"
 			"\t-v\tDump more data\n"
 			"\nExample: fbdump -v db_abc.journal-0000001\n"
@@ -175,6 +177,38 @@ int _tmain(int argc, _TCHAR* argv[])
 		{
 			file.readBuffer();
 			fileType = detectFileType(file);
+		}
+
+		Attachment att;
+		if (!database.empty())
+		{
+			HMODULE fbLibrary = LoadLibrary(_TEXT("fbclient"));
+			if (fbLibrary == nullptr)
+			{
+				fprintf(stderr, "Error loading Firebird client %lu\n", GetLastError());
+				throw static_exception("Firebird attach failed");
+			}
+			decltype(Firebird::fb_get_master_interface)* f = reinterpret_cast<decltype(Firebird::fb_get_master_interface)*>((void*)GetProcAddress(fbLibrary, "fb_get_master_interface"));
+			if (f == nullptr)
+			{
+				throw static_exception("fb_get_master_interface function not found in Firebird library");
+			}
+			master = f();
+			ParameterBlock dpb;
+			dpb = isc_dpb_version1;
+			dpb += isc_dpb_utf8_filename;
+			dpb += (unsigned char)0;
+
+			if (!userName.empty())
+			{
+				dpb.appendTagged(isc_dpb_user_name, userName);
+			}
+			if (!password.empty())
+			{
+				dpb.appendTagged(isc_dpb_password, password);
+			}
+			Status st("Database attach");
+			att.reset(master->getDispatcher()->attachDatabase(&st, to_string(database).c_str(), dpb.size(), dpb.c_str()));
 		}
 
 		switch (fileType)

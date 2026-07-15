@@ -37,12 +37,15 @@
 		<Unit filename="detector.h" />
 		<Unit filename="dumper.cpp" />
 		<Unit filename="dumper.h" />
+		<Unit filename="fbinterface.h" />
 		<Unit filename="journal.cpp" />
 		<Unit filename="journal.h" />
 		<Unit filename="main.cpp" />
 		<Unit filename="reader.cpp" />
 		<Unit filename="reader.h" />
 		<Unit filename="static_exception.h" />
+		<Unit filename="status.cpp" />
+		<Unit filename="status.h" />
 		<Unit filename="tstring.cpp" />
 		<Unit filename="tstring.h" />
 		<Extensions />

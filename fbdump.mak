@@ -30,7 +30,7 @@ OBJDIR_WINDOWS = build\\obj
 DEP_WINDOWS = 
 OUT_WINDOWS = build\\fbdump.exe
 
-OBJ_WINDOWS = $(OBJDIR_WINDOWS)\\detector.o $(OBJDIR_WINDOWS)\\dumper.o $(OBJDIR_WINDOWS)\\journal.o $(OBJDIR_WINDOWS)\\main.o $(OBJDIR_WINDOWS)\\reader.o $(OBJDIR_WINDOWS)\\tstring.o
+OBJ_WINDOWS = $(OBJDIR_WINDOWS)\\detector.o $(OBJDIR_WINDOWS)\\dumper.o $(OBJDIR_WINDOWS)\\journal.o $(OBJDIR_WINDOWS)\\main.o $(OBJDIR_WINDOWS)\\reader.o $(OBJDIR_WINDOWS)\\status.o $(OBJDIR_WINDOWS)\\tstring.o
 
 all: windows
 
@@ -61,6 +61,9 @@ $(OBJDIR_WINDOWS)\\main.o: main.cpp
 
 $(OBJDIR_WINDOWS)\\reader.o: reader.cpp
 	$(CXX) $(CFLAGS_WINDOWS) $(INC_WINDOWS) -c reader.cpp -o $(OBJDIR_WINDOWS)\\reader.o
+
+$(OBJDIR_WINDOWS)\\status.o: status.cpp
+	$(CXX) $(CFLAGS_WINDOWS) $(INC_WINDOWS) -c status.cpp -o $(OBJDIR_WINDOWS)\\status.o
 
 $(OBJDIR_WINDOWS)\\tstring.o: tstring.cpp
 	$(CXX) $(CFLAGS_WINDOWS) $(INC_WINDOWS) -c tstring.cpp -o $(OBJDIR_WINDOWS)\\tstring.o
