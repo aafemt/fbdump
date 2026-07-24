@@ -26,7 +26,7 @@ namespace Journal
 		}
 	};
 
-	void dumpIt(Reader& file)
+	void dumpIt(Reader& file, Attachment& att)
 	{
 		struct stat64 st{};
 		if (fstat64(file.f, &st) == -1)
@@ -182,24 +182,31 @@ namespace Journal
 				case opInsertRecord:
 					{
 						uint32_t atom = file.getInt32();
+						std::string schema;
 						std::string name = atoms.get(atom);
 						opLength += 4;
 						if (protocol > 1)
 						{
 							atom = file.getInt32();
+							schema = std::move(name);
 							opLength += 4;
-							name += '.';
-							name += atoms.get(atom);
+							name = atoms.get(atom);
 						}
 						uint32_t dataLength = file.getInt32();
 						opLength += 4 + dataLength;
-						printf("\tInsert record into %s, data length %u\n", name.c_str(), dataLength);
-						if (verbose)
+						if (schema.empty())
 						{
-							CompactHexDumper dumper;
-							printf("\t\t");
-							file.dumpTo(dumper, dataLength);
-							printf("\n");
+							printf("\tInsert record into %s, data length %u\n", name.c_str(), dataLength);
+						}
+						else
+						{
+							printf("\tInsert record into %s.%s, data length %u\n", schema.c_str(), name.c_str(), dataLength);
+						}
+						if (verbose && dataLength > 0)
+						{
+							std::unique_ptr<unsigned char[]> data(new unsigned char[dataLength]);
+							file.readBuffer(data.get(), dataLength);
+							dumpData(file, schema, name, data.get(), dataLength, att);
 						}
 						else
 						{

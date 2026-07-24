@@ -21,6 +21,28 @@ struct interface_deleter
 	}
 };
 
+// Copy-paste from Firebird sources. Must be kept in synch with ods.h
+namespace Ods
+{
+	struct Descriptor13
+	{
+		uint8_t	dsc_dtype;
+		int8_t	dsc_scale;
+		uint16_t	dsc_length;
+		int16_t	dsc_sub_type;
+		uint16_t	dsc_flags;
+		uint32_t	dsc_offset;
+	};
+
+	static_assert(sizeof(struct Descriptor13) == 12, "struct Descriptor size mismatch");
+	static_assert(offsetof(struct Descriptor13, dsc_dtype) == 0, "dsc_dtype offset mismatch");
+	static_assert(offsetof(struct Descriptor13, dsc_scale) == 1, "dsc_scale offset mismatch");
+	static_assert(offsetof(struct Descriptor13, dsc_length) == 2, "dsc_length offset mismatch");
+	static_assert(offsetof(struct Descriptor13, dsc_sub_type) == 4, "dsc_sub_type offset mismatch");
+	static_assert(offsetof(struct Descriptor13, dsc_flags) == 6, "dsc_flags offset mismatch");
+	static_assert(offsetof(struct Descriptor13, dsc_offset) == 8, "dsc_offset offset mismatch");
+}
+
 struct ParameterBlock: public std::basic_string<unsigned char>
 {
 	using std::basic_string<unsigned char>::append;
@@ -87,27 +109,10 @@ struct ParameterBlock: public std::basic_string<unsigned char>
 	}
 };
 
-typedef std::unique_ptr<Firebird::IAttachment, interface_deleter> Attachment;
-
-// Smart pointer for transaction. Autostart a transaction with default parameters
-class Transaction
+struct Attachment : public std::unique_ptr<Firebird::IAttachment, interface_deleter>
 {
-	Firebird::ITransaction* tr = nullptr;
-public:
-	Transaction(Firebird::IAttachment* att);
-	Transaction(Firebird::IAttachment* att, ParameterBlock& tpb);
-	~Transaction();
-
-	void commit();
-	void commit(const char* where);
-	operator Firebird::ITransaction*()
-	{
-		return tr;
-	}
-	explicit operator bool() const
-	{
-		return tr != nullptr;
-	}
+	std::unique_ptr<Firebird::ITransaction, interface_deleter> trans;
+	std::unique_ptr<Firebird::IStatement, interface_deleter> formatQuery;
 };
 
 inline Firebird::IMaster* master = nullptr;

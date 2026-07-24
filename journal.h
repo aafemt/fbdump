@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <rpc.h>
 
+#include "fbinterface.h"
 #include "reader.h"
 
 namespace Journal
@@ -67,5 +68,5 @@ namespace Journal
 	static_assert(std::has_unique_object_representations_v<Block>);
 
 
-	void dumpIt(Reader& file);
+	void dumpIt(Reader& file, Attachment& att);
 }

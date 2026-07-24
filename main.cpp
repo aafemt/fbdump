@@ -214,7 +214,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		switch (fileType)
 		{
 		case FileType::Journal:
-			Journal::dumpIt(file);
+			Journal::dumpIt(file, att);
 			break;
 		case FileType::Unknown:
 			printf("Unable to determine type of file \"%s\", perhaps it is damaged.\n", to_string(fileName).c_str());

@@ -38,11 +38,15 @@
 		<Unit filename="dumper.cpp" />
 		<Unit filename="dumper.h" />
 		<Unit filename="fbinterface.h" />
+		<Unit filename="format.cpp" />
+		<Unit filename="format.h" />
 		<Unit filename="journal.cpp" />
 		<Unit filename="journal.h" />
 		<Unit filename="main.cpp" />
+		<Unit filename="metadata.h" />
 		<Unit filename="reader.cpp" />
 		<Unit filename="reader.h" />
+		<Unit filename="record.h" />
 		<Unit filename="static_exception.h" />
 		<Unit filename="status.cpp" />
 		<Unit filename="status.h" />

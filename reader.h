@@ -30,4 +30,9 @@ struct Reader
 	void skip(size_t size);
 	bool eof();
 	size_t offset();
+
+	uint16_t gatherInt16(const unsigned char* from);
+	uint32_t gatherInt32(const unsigned char* from);
+	uint64_t gatherInt64(const unsigned char* from);
+
 };

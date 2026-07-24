@@ -119,6 +119,36 @@ uint64_t Reader::getInt64()
 	return result;
 }
 
+uint16_t Reader::gatherInt16(const unsigned char* from)
+{
+	uint16_t result = *reinterpret_cast<const uint16_t*>(from);
+	if (endianness != __BYTE_ORDER__)
+	{
+		result = __builtin_bswap16(result);
+	}
+	return result;
+}
+
+uint32_t Reader::gatherInt32(const unsigned char* from)
+{
+	uint32_t result = *reinterpret_cast<const uint32_t*>(from);
+	if (endianness != __BYTE_ORDER__)
+	{
+		result = __builtin_bswap32(result);
+	}
+	return result;
+}
+
+uint64_t Reader::gatherInt64(const unsigned char* from)
+{
+	uint64_t result = *reinterpret_cast<const uint64_t*>(from);
+	if (endianness != __BYTE_ORDER__)
+	{
+		result = __builtin_bswap64(result);
+	}
+	return result;
+}
+
 bool Reader::eof()
 {
 	if (readPoint < buffer + dataSize)
