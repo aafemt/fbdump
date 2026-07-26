@@ -230,44 +230,102 @@ void dumpData(Reader& file, const std::string& schema, const std::string& name, 
 			const Format& fmt = fmtItr->second;
 			for (size_t i = 0; i < fmt.size(); ++i)
 			{
+				printf("\t\t%zu> ", i);
 				if (data[i / 8] & 1 << (i % 8))
 				{
-					printf("\t\t%zu> <NULL>\n", i);
+					printf("<NULL>\n");
 				}
 				else
 				{
 					const Ods::Descriptor13& desc = fmt[i];
+/*					This case is impossible because length of format is formed for longest field and is chosen by length
 					if (desc.dsc_offset + desc.dsc_length > dataLength)
 					{
 						fprintf(stderr, "Data for field %zu run out of buffer: %u of %zu\n", i, desc.dsc_offset + desc.dsc_length, dataLength);
 						return;
 					}
+*/
+					const unsigned char* v = data + desc.dsc_offset;
 					switch (desc.dsc_dtype)
 					{
-					case dtype_varying:
+					case dtype_text:
 						{
-							const unsigned char* v = data + desc.dsc_offset;
-							uint16_t len = file.gatherInt16(v);
-							if (len > desc.dsc_length - 2)
+							if (desc.dsc_sub_type == fb_text_subtype_binary)
 							{
-								fprintf(stderr, "Structure error: actual length of varying string %u is bigger than declared field length %u\n", len, desc.dsc_length - 2);
+								HexDumper dumper;
+								dumper.dumpIt(v, desc.dsc_length);
 							}
 							else
 							{
-								printf("\t\t%zu> '%.*s'\n", i, len, v + 2);
+								printf("'%.*s'\n", desc.dsc_length, v);
 							}
+							break;
+						}
+					case dtype_varying:
+						{
+							uint16_t len = file.gatherInt16(v);
+							if (len > desc.dsc_length - offsetof(paramvary, vary_string))
+							{
+								fprintf(stderr, "Structure error: actual length of varying string %u is bigger than declared field length %u\n", len, desc.dsc_length - 2);
+								len = desc.dsc_length - offsetof(paramvary, vary_string);
+							}
+							if (desc.dsc_sub_type == fb_text_subtype_binary)
+							{
+								HexDumper dumper;
+								dumper.dumpIt(v + offsetof(paramvary, vary_string), len);
+							}
+							else
+							{
+								printf("'%.*s'\n", len, v + offsetof(paramvary, vary_string));
+							}
+							break;
+						}
+					case dtype_short:
+						{
+							printf("%s\n", formatDecimal(desc.dsc_scale, file.gatherInt16(v)).c_str());
 							break;
 						}
 					case dtype_long:
 						{
-							printf("\t\t%zu> %s\n", i, formatDecimal(desc.dsc_scale, file.gatherInt32(data + desc.dsc_offset)).c_str());
+							printf("%s\n", formatDecimal(desc.dsc_scale, file.gatherInt32(v)).c_str());
+							break;
+						}
+					case dtype_sql_date:
+						{
+							printf("%s\n", formatISCDate(file.gatherInt32(v)).c_str());
+							break;
+						}
+					case dtype_sql_time:
+						{
+							printf("%s\n", formatISCTime(file.gatherInt32(v)).c_str());
+							break;
+						}
+					case dtype_timestamp:
+						{
+							printf("%s %s\n", formatISCDate(file.gatherInt32(v)).c_str(), formatISCTime(file.gatherInt32(v + offsetof(ISC_TIMESTAMP, timestamp_time))).c_str());
+							break;
+						}
+					case dtype_blob:
+					case dtype_array:
+						{
+							printf("%x:%x\n", file.gatherInt32(v), file.gatherInt32(v + offsetof(ISC_QUAD, isc_quad_low)));
+							break;
+						}
+					case dtype_int64:
+						{
+							printf("%s\n", formatDecimal(desc.dsc_scale, file.gatherInt64(v)).c_str());
+							break;
+						}
+					case dtype_boolean:
+						{
+							printf("%s\n", *v ? "TRUE" : "FALSE");
 							break;
 						}
 					default:
 						{
-							printf("\t\t%zu> unknown type %u\n", i, desc.dsc_dtype);
+							printf("*** unknown type %u ***\n", desc.dsc_dtype);
 							HexDumper dumper;
-							dumper.dumpIt(data + desc.dsc_offset, desc.dsc_length);
+							dumper.dumpIt(v, desc.dsc_length);
 						}
 					}
 				}
