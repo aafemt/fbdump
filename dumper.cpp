@@ -1,6 +1,7 @@
 #define __USE_MINGW_ANSI_STDIO 1
 #include <string.h>
 #include <stdio.h>
+#include <cstdlib>
 
 #include "dumper.h"
 #include "format.h"
@@ -109,6 +110,8 @@ void dumpData(Reader& file, const std::string& schema, const std::string& name, 
 {
 	if (att)
 	{
+		static Firebird::IUtil* util = master->getUtilInterface();
+
 		TableKey tableKey(schema, name);
 		auto itr = cache.find(tableKey);
 		if (itr == cache.end())
@@ -321,6 +324,73 @@ void dumpData(Reader& file, const std::string& schema, const std::string& name, 
 							printf("%s\n", *v ? "TRUE" : "FALSE");
 							break;
 						}
+					case dtype_dec64:
+						{
+							// Here I hope that byte layout of DecFloat matches layout of integers of the same size
+							// Perhaps it is not true.
+							Status st("Get DecFloat16 interface");
+							Firebird::IDecFloat16* d = util->getDecFloat16(&st);
+							char buf[50];
+							static_assert(sizeof(uint64_t) == sizeof(FB_DEC16));
+							uint64_t tmp = file.gatherInt64(v);
+							d->toString(st("DecFloat to string"), reinterpret_cast<const FB_DEC16*>(&tmp), sizeof(buf), buf);
+							printf("%s\n", buf);
+							break;
+						}
+					case dtype_dec128:
+						{
+							Status st("Get DecFloat34 interface");
+							Firebird::IDecFloat34* d = util->getDecFloat34(&st);
+							char buf[100];
+							static_assert(sizeof(FB_I128) == sizeof(FB_DEC34));
+							FB_I128 tmp;
+							file.gatherInt128(v, tmp);
+							d->toString(st("DecFloat to string"), reinterpret_cast<const FB_DEC34*>(&tmp), sizeof(buf), buf);
+							printf("%s\n", buf);
+							break;
+						}
+					case dtype_int128:
+						{
+							Status st("Get Int128 interface");
+							Firebird::IInt128* d = util->getInt128(&st);
+							char buf[100];
+							FB_I128 tmp;
+							file.gatherInt128(v, tmp);
+							d->toString(st("Int128 to string"), &tmp, desc.dsc_scale, sizeof(buf), buf);
+							printf("%s\n", buf);
+							break;
+						}
+					case dtype_sql_time_tz:
+						{
+							printf("%s ", formatISCTime(file.gatherInt32(v)).c_str());
+							short timeZone = file.gatherInt16(v + offsetof(ISC_TIME_TZ, time_zone));
+							if (timeZone < 0)
+							{
+								printf("TZ id %u\n", timeZone);
+							}
+							else
+							{
+								short offset = timeZone - 1439;
+								printf("%d:%u\n", offset / 60, std::abs(offset) % 60);
+							}
+							break;
+						}
+					case dtype_timestamp_tz:
+						{
+							printf("%s %s ", formatISCDate(file.gatherInt32(v)).c_str(), formatISCTime(file.gatherInt32(v + offsetof(ISC_TIMESTAMP, timestamp_time))).c_str());
+							short timeZone = file.gatherInt16(v + offsetof(ISC_TIMESTAMP_TZ, time_zone));
+							if (timeZone < 0)
+							{
+								printf("TZ id %u\n", timeZone);
+							}
+							else
+							{
+								short offset = timeZone - 1439;
+								printf("%d:%u\n", offset / 60, std::abs(offset) % 60);
+							}
+							break;
+						}
+					// Ex-types are not used in storage, at least for now
 					default:
 						{
 							printf("*** unknown type %u ***\n", desc.dsc_dtype);

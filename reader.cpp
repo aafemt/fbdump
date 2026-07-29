@@ -149,6 +149,22 @@ uint64_t Reader::gatherInt64(const unsigned char* from)
 	return result;
 }
 
+void Reader::gatherInt128(const unsigned char* from, FB_I128& to)
+{
+	uint64_t t1 = *reinterpret_cast<const uint64_t*>(from);
+	uint64_t t2 = *reinterpret_cast<const uint64_t*>(from + sizeof(uint64_t));
+	if (endianness != __BYTE_ORDER__)
+	{
+		to.fb_data[0] = __builtin_bswap64(t2);
+		to.fb_data[1] = __builtin_bswap64(t1);
+	}
+	else
+	{
+		to.fb_data[0] = t1;
+		to.fb_data[1] = t2;
+	}
+}
+
 bool Reader::eof()
 {
 	if (readPoint < buffer + dataSize)
