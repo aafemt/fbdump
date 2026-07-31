@@ -33,8 +33,8 @@ struct Reader
 	bool eof();
 	size_t offset();
 
-	uint16_t gatherInt16(const unsigned char* from);
-	uint32_t gatherInt32(const unsigned char* from);
-	uint64_t gatherInt64(const unsigned char* from);
-	void gatherInt128(const unsigned char* from, FB_I128& to);
+	uint16_t gatherInt16(const unsigned char* from) const;
+	uint32_t gatherInt32(const unsigned char* from) const;
+	uint64_t gatherInt64(const unsigned char* from) const;
+	void gatherInt128(const unsigned char* from, FB_I128& to) const;
 };

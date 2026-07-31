@@ -119,7 +119,7 @@ uint64_t Reader::getInt64()
 	return result;
 }
 
-uint16_t Reader::gatherInt16(const unsigned char* from)
+uint16_t Reader::gatherInt16(const unsigned char* from) const
 {
 	uint16_t result = *reinterpret_cast<const uint16_t*>(from);
 	if (endianness != __BYTE_ORDER__)
@@ -129,7 +129,7 @@ uint16_t Reader::gatherInt16(const unsigned char* from)
 	return result;
 }
 
-uint32_t Reader::gatherInt32(const unsigned char* from)
+uint32_t Reader::gatherInt32(const unsigned char* from) const
 {
 	uint32_t result = *reinterpret_cast<const uint32_t*>(from);
 	if (endianness != __BYTE_ORDER__)
@@ -139,7 +139,7 @@ uint32_t Reader::gatherInt32(const unsigned char* from)
 	return result;
 }
 
-uint64_t Reader::gatherInt64(const unsigned char* from)
+uint64_t Reader::gatherInt64(const unsigned char* from) const
 {
 	uint64_t result = *reinterpret_cast<const uint64_t*>(from);
 	if (endianness != __BYTE_ORDER__)
@@ -149,7 +149,7 @@ uint64_t Reader::gatherInt64(const unsigned char* from)
 	return result;
 }
 
-void Reader::gatherInt128(const unsigned char* from, FB_I128& to)
+void Reader::gatherInt128(const unsigned char* from, FB_I128& to) const
 {
 	uint64_t t1 = *reinterpret_cast<const uint64_t*>(from);
 	uint64_t t2 = *reinterpret_cast<const uint64_t*>(from + sizeof(uint64_t));

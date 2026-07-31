@@ -29,4 +29,4 @@ struct CompactHexDumper : public Dumper
 struct Attachment;
 struct Reader;
 // Dump data from record of given table
-void dumpData(Reader& file, const std::string& schema, const std::string& name, const unsigned char* data, size_t dataLength, Attachment& att);
+void dumpData(Attachment& att, const Reader& file, const std::string& schema, const std::string& name, const unsigned char* oldData, size_t oldDataLength, const unsigned char* newData, size_t newDataLength);

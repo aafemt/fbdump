@@ -104,13 +104,183 @@ namespace
 		}
 	};
 	std::unordered_map<TableKey, FormatList, TableHash> cache;
+
+	void dumpData(const Reader& file, const Format& format, const unsigned char* data, size_t index)
+	{
+		static Firebird::IUtil* util = master->getUtilInterface();
+
+		if (data[index / 8] & 1 << (index % 8))
+		{
+			printf("<NULL>\n");
+		}
+		else
+		{
+			const Ods::Descriptor13& desc = format[index];
+/*					This case is impossible because length of format is formed for longest field and is chosen by length
+			if (desc.dsc_offset + desc.dsc_length > dataLength)
+			{
+				fprintf(stderr, "Data for field %zu run out of buffer: %u of %zu\n", i, desc.dsc_offset + desc.dsc_length, dataLength);
+				return;
+			}
+*/
+			const unsigned char* v = data + desc.dsc_offset;
+			switch (desc.dsc_dtype)
+			{
+			case dtype_text:
+				{
+					if (desc.dsc_sub_type == fb_text_subtype_binary)
+					{
+						HexDumper dumper;
+						dumper.dumpIt(v, desc.dsc_length);
+					}
+					else
+					{
+						printf("'%.*s'\n", desc.dsc_length, v);
+					}
+					break;
+				}
+			case dtype_varying:
+				{
+					uint16_t len = file.gatherInt16(v);
+					if (len > desc.dsc_length - offsetof(paramvary, vary_string))
+					{
+						fprintf(stderr, "Structure error: actual length of varying string %u is bigger than declared field length %u\n", len, desc.dsc_length - 2);
+						len = desc.dsc_length - offsetof(paramvary, vary_string);
+					}
+					if (desc.dsc_sub_type == fb_text_subtype_binary)
+					{
+						HexDumper dumper;
+						dumper.dumpIt(v + offsetof(paramvary, vary_string), len);
+					}
+					else
+					{
+						printf("'%.*s'\n", len, v + offsetof(paramvary, vary_string));
+					}
+					break;
+				}
+			case dtype_short:
+				{
+					printf("%s\n", formatDecimal(desc.dsc_scale, file.gatherInt16(v)).c_str());
+					break;
+				}
+			case dtype_long:
+				{
+					printf("%s\n", formatDecimal(desc.dsc_scale, file.gatherInt32(v)).c_str());
+					break;
+				}
+			case dtype_sql_date:
+				{
+					printf("%s\n", formatISCDate(file.gatherInt32(v)).c_str());
+					break;
+				}
+			case dtype_sql_time:
+				{
+					printf("%s\n", formatISCTime(file.gatherInt32(v)).c_str());
+					break;
+				}
+			case dtype_timestamp:
+				{
+					printf("%s %s\n", formatISCDate(file.gatherInt32(v)).c_str(), formatISCTime(file.gatherInt32(v + offsetof(ISC_TIMESTAMP, timestamp_time))).c_str());
+					break;
+				}
+			case dtype_blob:
+			case dtype_array:
+				{
+					printf("%x:%x\n", file.gatherInt32(v), file.gatherInt32(v + offsetof(ISC_QUAD, isc_quad_low)));
+					break;
+				}
+			case dtype_int64:
+				{
+					printf("%s\n", formatDecimal(desc.dsc_scale, file.gatherInt64(v)).c_str());
+					break;
+				}
+			case dtype_boolean:
+				{
+					printf("%s\n", *v ? "TRUE" : "FALSE");
+					break;
+				}
+			case dtype_dec64:
+				{
+					// Here I hope that byte layout of DecFloat matches layout of integers of the same size
+					// Perhaps it is not true.
+					Status st("Get DecFloat16 interface");
+					Firebird::IDecFloat16* d = util->getDecFloat16(&st);
+					char buf[50];
+					static_assert(sizeof(uint64_t) == sizeof(FB_DEC16));
+					uint64_t tmp = file.gatherInt64(v);
+					d->toString(st("DecFloat to string"), reinterpret_cast<const FB_DEC16*>(&tmp), sizeof(buf), buf);
+					printf("%s\n", buf);
+					break;
+				}
+			case dtype_dec128:
+				{
+					Status st("Get DecFloat34 interface");
+					Firebird::IDecFloat34* d = util->getDecFloat34(&st);
+					char buf[100];
+					static_assert(sizeof(FB_I128) == sizeof(FB_DEC34));
+					FB_I128 tmp;
+					file.gatherInt128(v, tmp);
+					d->toString(st("DecFloat to string"), reinterpret_cast<const FB_DEC34*>(&tmp), sizeof(buf), buf);
+					printf("%s\n", buf);
+					break;
+				}
+			case dtype_int128:
+				{
+					Status st("Get Int128 interface");
+					Firebird::IInt128* d = util->getInt128(&st);
+					char buf[100];
+					FB_I128 tmp;
+					file.gatherInt128(v, tmp);
+					d->toString(st("Int128 to string"), &tmp, desc.dsc_scale, sizeof(buf), buf);
+					printf("%s\n", buf);
+					break;
+				}
+			case dtype_sql_time_tz:
+				{
+					printf("%s ", formatISCTime(file.gatherInt32(v)).c_str());
+					short timeZone = file.gatherInt16(v + offsetof(ISC_TIME_TZ, time_zone));
+					if (timeZone < 0)
+					{
+						printf("TZ id %u\n", timeZone);
+					}
+					else
+					{
+						short offset = timeZone - 1439;
+						printf("%d:%u\n", offset / 60, std::abs(offset) % 60);
+					}
+					break;
+				}
+			case dtype_timestamp_tz:
+				{
+					printf("%s %s ", formatISCDate(file.gatherInt32(v)).c_str(), formatISCTime(file.gatherInt32(v + offsetof(ISC_TIMESTAMP, timestamp_time))).c_str());
+					short timeZone = file.gatherInt16(v + offsetof(ISC_TIMESTAMP_TZ, time_zone));
+					if (timeZone < 0)
+					{
+						printf("TZ id %u\n", timeZone);
+					}
+					else
+					{
+						short offset = timeZone - 1439;
+						printf("%d:%u\n", offset / 60, std::abs(offset) % 60);
+					}
+					break;
+				}
+			// Ex-types are not used in storage, at least for now
+			default:
+				{
+					printf("*** unknown type %u ***\n", desc.dsc_dtype);
+					HexDumper dumper;
+					dumper.dumpIt(v, desc.dsc_length);
+				}
+			}
+		}
+	}
 }
 
-void dumpData(Reader& file, const std::string& schema, const std::string& name, const unsigned char* data, size_t dataLength, Attachment& att)
+void dumpData(Attachment& att, const Reader& file, const std::string& schema, const std::string& name, const unsigned char* oldData, size_t oldDataLength, const unsigned char* newData, size_t newDataLength)
 {
 	if (att)
 	{
-		static Firebird::IUtil* util = master->getUtilInterface();
 
 		TableKey tableKey(schema, name);
 		auto itr = cache.find(tableKey);
@@ -222,189 +392,66 @@ void dumpData(Reader& file, const std::string& schema, const std::string& name, 
 				list.try_emplace(dataSize, std::move(format));
 			}
 		}
-		const auto fmtItr = itr->second.find(dataLength);
-		if (fmtItr == itr->second.end())
+
+		const Format* oldFormat = nullptr;
+		size_t oldFormatSize = 0;
+		const Format* newFormat = nullptr;
+		size_t newFormatSize = 0;
+		if (oldData != nullptr && oldDataLength != 0)
 		{
-			fprintf(stderr, "No format of length %zu found\n", dataLength);
-			// And fall out to binary dump
+			const auto fmtItr = itr->second.find(oldDataLength);
+			if (fmtItr == itr->second.end())
+			{
+				fprintf(stderr, "No format of length %zu found\n", oldDataLength);
+				// And fall out to binary dump
+			}
+			else
+			{
+				oldFormat = &fmtItr->second;
+				oldFormatSize = oldFormat->size();
+			}
 		}
-		else
+		if (newData != nullptr && newDataLength != 0)
 		{
-			const Format& fmt = fmtItr->second;
-			for (size_t i = 0; i < fmt.size(); ++i)
+			const auto fmtItr = itr->second.find(newDataLength);
+			if (fmtItr == itr->second.end())
+			{
+				fprintf(stderr, "No format of length %zu found\n", newDataLength);
+				// And fall out to binary dump
+			}
+			else
+			{
+				newFormat = &fmtItr->second;
+				newFormatSize = newFormat->size();
+			}
+		}
+		size_t maxSize = std::max(oldFormatSize, newFormatSize);
+		for (size_t i = 0; i < maxSize; ++i)
+		{
+			if (oldData != nullptr && oldDataLength != 0 && i < oldFormatSize)
+			{
+				printf("\t\t%zu< ", i);
+				dumpData(file, *oldFormat, oldData, i);
+			}
+			if (newData != nullptr && newDataLength != 0 && i < newFormatSize)
 			{
 				printf("\t\t%zu> ", i);
-				if (data[i / 8] & 1 << (i % 8))
-				{
-					printf("<NULL>\n");
-				}
-				else
-				{
-					const Ods::Descriptor13& desc = fmt[i];
-/*					This case is impossible because length of format is formed for longest field and is chosen by length
-					if (desc.dsc_offset + desc.dsc_length > dataLength)
-					{
-						fprintf(stderr, "Data for field %zu run out of buffer: %u of %zu\n", i, desc.dsc_offset + desc.dsc_length, dataLength);
-						return;
-					}
-*/
-					const unsigned char* v = data + desc.dsc_offset;
-					switch (desc.dsc_dtype)
-					{
-					case dtype_text:
-						{
-							if (desc.dsc_sub_type == fb_text_subtype_binary)
-							{
-								HexDumper dumper;
-								dumper.dumpIt(v, desc.dsc_length);
-							}
-							else
-							{
-								printf("'%.*s'\n", desc.dsc_length, v);
-							}
-							break;
-						}
-					case dtype_varying:
-						{
-							uint16_t len = file.gatherInt16(v);
-							if (len > desc.dsc_length - offsetof(paramvary, vary_string))
-							{
-								fprintf(stderr, "Structure error: actual length of varying string %u is bigger than declared field length %u\n", len, desc.dsc_length - 2);
-								len = desc.dsc_length - offsetof(paramvary, vary_string);
-							}
-							if (desc.dsc_sub_type == fb_text_subtype_binary)
-							{
-								HexDumper dumper;
-								dumper.dumpIt(v + offsetof(paramvary, vary_string), len);
-							}
-							else
-							{
-								printf("'%.*s'\n", len, v + offsetof(paramvary, vary_string));
-							}
-							break;
-						}
-					case dtype_short:
-						{
-							printf("%s\n", formatDecimal(desc.dsc_scale, file.gatherInt16(v)).c_str());
-							break;
-						}
-					case dtype_long:
-						{
-							printf("%s\n", formatDecimal(desc.dsc_scale, file.gatherInt32(v)).c_str());
-							break;
-						}
-					case dtype_sql_date:
-						{
-							printf("%s\n", formatISCDate(file.gatherInt32(v)).c_str());
-							break;
-						}
-					case dtype_sql_time:
-						{
-							printf("%s\n", formatISCTime(file.gatherInt32(v)).c_str());
-							break;
-						}
-					case dtype_timestamp:
-						{
-							printf("%s %s\n", formatISCDate(file.gatherInt32(v)).c_str(), formatISCTime(file.gatherInt32(v + offsetof(ISC_TIMESTAMP, timestamp_time))).c_str());
-							break;
-						}
-					case dtype_blob:
-					case dtype_array:
-						{
-							printf("%x:%x\n", file.gatherInt32(v), file.gatherInt32(v + offsetof(ISC_QUAD, isc_quad_low)));
-							break;
-						}
-					case dtype_int64:
-						{
-							printf("%s\n", formatDecimal(desc.dsc_scale, file.gatherInt64(v)).c_str());
-							break;
-						}
-					case dtype_boolean:
-						{
-							printf("%s\n", *v ? "TRUE" : "FALSE");
-							break;
-						}
-					case dtype_dec64:
-						{
-							// Here I hope that byte layout of DecFloat matches layout of integers of the same size
-							// Perhaps it is not true.
-							Status st("Get DecFloat16 interface");
-							Firebird::IDecFloat16* d = util->getDecFloat16(&st);
-							char buf[50];
-							static_assert(sizeof(uint64_t) == sizeof(FB_DEC16));
-							uint64_t tmp = file.gatherInt64(v);
-							d->toString(st("DecFloat to string"), reinterpret_cast<const FB_DEC16*>(&tmp), sizeof(buf), buf);
-							printf("%s\n", buf);
-							break;
-						}
-					case dtype_dec128:
-						{
-							Status st("Get DecFloat34 interface");
-							Firebird::IDecFloat34* d = util->getDecFloat34(&st);
-							char buf[100];
-							static_assert(sizeof(FB_I128) == sizeof(FB_DEC34));
-							FB_I128 tmp;
-							file.gatherInt128(v, tmp);
-							d->toString(st("DecFloat to string"), reinterpret_cast<const FB_DEC34*>(&tmp), sizeof(buf), buf);
-							printf("%s\n", buf);
-							break;
-						}
-					case dtype_int128:
-						{
-							Status st("Get Int128 interface");
-							Firebird::IInt128* d = util->getInt128(&st);
-							char buf[100];
-							FB_I128 tmp;
-							file.gatherInt128(v, tmp);
-							d->toString(st("Int128 to string"), &tmp, desc.dsc_scale, sizeof(buf), buf);
-							printf("%s\n", buf);
-							break;
-						}
-					case dtype_sql_time_tz:
-						{
-							printf("%s ", formatISCTime(file.gatherInt32(v)).c_str());
-							short timeZone = file.gatherInt16(v + offsetof(ISC_TIME_TZ, time_zone));
-							if (timeZone < 0)
-							{
-								printf("TZ id %u\n", timeZone);
-							}
-							else
-							{
-								short offset = timeZone - 1439;
-								printf("%d:%u\n", offset / 60, std::abs(offset) % 60);
-							}
-							break;
-						}
-					case dtype_timestamp_tz:
-						{
-							printf("%s %s ", formatISCDate(file.gatherInt32(v)).c_str(), formatISCTime(file.gatherInt32(v + offsetof(ISC_TIMESTAMP, timestamp_time))).c_str());
-							short timeZone = file.gatherInt16(v + offsetof(ISC_TIMESTAMP_TZ, time_zone));
-							if (timeZone < 0)
-							{
-								printf("TZ id %u\n", timeZone);
-							}
-							else
-							{
-								short offset = timeZone - 1439;
-								printf("%d:%u\n", offset / 60, std::abs(offset) % 60);
-							}
-							break;
-						}
-					// Ex-types are not used in storage, at least for now
-					default:
-						{
-							printf("*** unknown type %u ***\n", desc.dsc_dtype);
-							HexDumper dumper;
-							dumper.dumpIt(v, desc.dsc_length);
-						}
-					}
-				}
+				dumpData(file, *newFormat, newData, i);
 			}
-			return;
 		}
+		return;
 	}
 	CompactHexDumper dmp;
-	printf("\t\t");
-	dmp.dumpIt(data, dataLength);
-	printf("\n");
+	if (oldData != nullptr && oldDataLength != 0)
+	{
+		printf("\t\t< ");
+		dmp.dumpIt(oldData, oldDataLength);
+		printf("\n");
+	}
+	if (newData != nullptr && newDataLength != 0)
+	{
+		printf("\t\t> ");
+		dmp.dumpIt(newData, newDataLength);
+		printf("\n");
+	}
 }

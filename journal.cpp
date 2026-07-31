@@ -206,7 +206,7 @@ namespace Journal
 						{
 							std::unique_ptr<unsigned char[]> data(new unsigned char[dataLength]);
 							file.readBuffer(data.get(), dataLength);
-							dumpData(file, schema, name, data.get(), dataLength, att);
+							dumpData(att, file, schema, name, nullptr, 0, data.get(), dataLength);
 						}
 						else
 						{
@@ -217,14 +217,15 @@ namespace Journal
 				case opUpdateRecord:
 					{
 						uint32_t atom = file.getInt32();
+						std::string schema;
 						std::string name = atoms.get(atom);
 						opLength += 4;
 						if (protocol > 1)
 						{
 							atom = file.getInt32();
+							schema = std::move(name);
 							opLength += 4;
-							name += '.';
-							name += atoms.get(atom);
+							name = atoms.get(atom);
 						}
 						uint32_t oldDataLength = file.getInt32();
 						opLength += 4 + oldDataLength;
@@ -240,15 +241,19 @@ namespace Journal
 						}
 						uint32_t newDataLength = file.getInt32();
 						opLength += 4 + newDataLength;
-						printf("\tUpdate record in %s, data length %u-%u\n", name.c_str(), oldDataLength, newDataLength);
+						if (schema.empty())
+						{
+							printf("\tUpdate record in %s, data length %u-%u\n", name.c_str(), oldDataLength, newDataLength);
+						}
+						else
+						{
+							printf("\tUpdate record in %s.%s, data length %u-%u\n", schema.c_str(), name.c_str(), oldDataLength, newDataLength);
+						}
 						if (verbose)
 						{
-							CompactHexDumper dumper;
-							printf("\t\t");
-							dumper.dumpIt(oldData.get(), oldDataLength);
-							printf("\n\t\t");
-							file.dumpTo(dumper, newDataLength);
-							printf("\n");
+							std::unique_ptr<unsigned char[]> newData(new unsigned char[newDataLength]);
+							file.readBuffer(newData.get(), newDataLength);
+							dumpData(att, file, schema, name, oldData.get(), oldDataLength, newData.get(), newDataLength);
 						}
 						else
 						{
@@ -259,24 +264,31 @@ namespace Journal
 				case opDeleteRecord:
 					{
 						uint32_t atom = file.getInt32();
+						std::string schema;
 						std::string name = atoms.get(atom);
 						opLength += 4;
 						if (protocol > 1)
 						{
 							atom = file.getInt32();
+							schema = std::move(name);
 							opLength += 4;
-							name += '.';
-							name += atoms.get(atom);
+							name = atoms.get(atom);
 						}
 						uint32_t dataLength = file.getInt32();
 						opLength += 4 + dataLength;
-						printf("\tDelete record from %s, data length %u\n", name.c_str(), dataLength);
+						if (schema.empty())
+						{
+							printf("\tDelete record from %s, data length %u\n", name.c_str(), dataLength);
+						}
+						else
+						{
+							printf("\tDelete record from %s.%s, data length %u\n", schema.c_str(), name.c_str(), dataLength);
+						}
 						if (verbose)
 						{
-							CompactHexDumper dumper;
-							printf("\t\t");
-							file.dumpTo(dumper, dataLength);
-							printf("\n");
+							std::unique_ptr<unsigned char[]> data(new unsigned char[dataLength]);
+							file.readBuffer(data.get(), dataLength);
+							dumpData(att, file, schema, name, data.get(), dataLength, nullptr, 0);
 						}
 						else
 						{
