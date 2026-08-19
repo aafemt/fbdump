@@ -33,6 +33,8 @@
 			<Add option="-fexceptions" />
 			<Add option="--std=c++17" />
 		</Compiler>
+		<Unit filename="charsets.cpp" />
+		<Unit filename="charsets.h" />
 		<Unit filename="detector.cpp" />
 		<Unit filename="detector.h" />
 		<Unit filename="dumper.cpp" />

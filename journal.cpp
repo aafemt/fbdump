@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <memory>
 
+#include "charsets.h"
 #include "journal.h"
 #include "static_exception.h"
 
@@ -376,8 +377,21 @@ namespace Journal
 						}
 						if (verbose)
 						{
-							HexDumper dumper;
-							file.dumpTo(dumper, sqlLength);
+							std::unique_ptr<unsigned char[]> sql(new unsigned char[sqlLength]);
+							file.readBuffer(sql.get(), sqlLength);
+							std::string tmp;
+							if (convertToUtf8(sql.get(), sqlLength, tmp, charset))
+							{
+								printf("==================================================================\n"
+									   "%s\n"
+									   "==================================================================\n",
+									   tmp.c_str());
+							}
+							else
+							{
+								HexDumper dumper;
+								dumper.dumpIt(sql.get(), sqlLength);
+							}
 						}
 						else
 						{

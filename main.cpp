@@ -27,7 +27,7 @@ void help()
 			"\t-v\tDump more data\n"
 			"\nExample: fbdump -v db_abc.journal-0000001\n"
 			"\nOptions may be combined.\n"
-			"Example: fbdump -iv db_abc.journal-0000001\n"
+			"Example: fbdump -ivdup db_abc.journal-0000001 localhost:db sysdba masterkey\n"
 			);
 }
 
@@ -42,7 +42,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		{
 			oldCP = GetConsoleOutputCP();
 			if (!SetConsoleOutputCP(CP_UTF8))
-				printf("Set console output to UTF-8 failed. Error %lu\n", GetLastError());
+				fprintf(stderr, "Set console output to UTF-8 failed. Error %lu\n", GetLastError());
 		}
 		~CPHolder()
 		{

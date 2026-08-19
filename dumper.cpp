@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <cstdlib>
 
+#include "charsets.h"
 #include "dumper.h"
 #include "format.h"
 #include "reader.h"
@@ -128,15 +129,19 @@ namespace
 			{
 			case dtype_text:
 				{
-					if (desc.dsc_sub_type == fb_text_subtype_binary)
+					if (desc.dsc_sub_type != fb_text_subtype_binary)
 					{
-						HexDumper dumper;
-						dumper.dumpIt(v, desc.dsc_length);
+						std::string tmp;
+						if (convertToUtf8(v, desc.dsc_length, tmp, desc.dsc_sub_type & 0xFF))
+						{
+							printf("'%s'\n", tmp.c_str());
+							break;
+						}
+						// else fall to binary dump
+						printf("\n");
 					}
-					else
-					{
-						printf("'%.*s'\n", desc.dsc_length, v);
-					}
+					HexDumper dumper;
+					dumper.dumpIt(v, desc.dsc_length);
 					break;
 				}
 			case dtype_varying:
@@ -147,15 +152,18 @@ namespace
 						fprintf(stderr, "Structure error: actual length of varying string %u is bigger than declared field length %u\n", len, desc.dsc_length - 2);
 						len = desc.dsc_length - offsetof(paramvary, vary_string);
 					}
-					if (desc.dsc_sub_type == fb_text_subtype_binary)
+					if (desc.dsc_sub_type != fb_text_subtype_binary)
 					{
-						HexDumper dumper;
-						dumper.dumpIt(v + offsetof(paramvary, vary_string), len);
+						std::string tmp;
+						if (convertToUtf8(v + offsetof(paramvary, vary_string), len, tmp, desc.dsc_sub_type & 0xFF))
+						{
+							printf("'%s'\n", tmp.c_str());
+							break;
+						}
+						printf("\n"); // Move dump to the next string for right formatting
 					}
-					else
-					{
-						printf("'%.*s'\n", len, v + offsetof(paramvary, vary_string));
-					}
+					HexDumper dumper;
+					dumper.dumpIt(v + offsetof(paramvary, vary_string), len);
 					break;
 				}
 			case dtype_short:

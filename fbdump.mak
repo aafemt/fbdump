@@ -30,7 +30,7 @@ OBJDIR_WINDOWS = build\\obj
 DEP_WINDOWS = 
 OUT_WINDOWS = build\\fbdump.exe
 
-OBJ_WINDOWS = $(OBJDIR_WINDOWS)\\main.o $(OBJDIR_WINDOWS)\\tstring.o $(OBJDIR_WINDOWS)\\status.o $(OBJDIR_WINDOWS)\\reader.o $(OBJDIR_WINDOWS)\\detector.o $(OBJDIR_WINDOWS)\\journal.o $(OBJDIR_WINDOWS)\\format.o $(OBJDIR_WINDOWS)\\dumper.o
+OBJ_WINDOWS = $(OBJDIR_WINDOWS)\\tstring.o $(OBJDIR_WINDOWS)\\status.o $(OBJDIR_WINDOWS)\\reader.o $(OBJDIR_WINDOWS)\\main.o $(OBJDIR_WINDOWS)\\charsets.o $(OBJDIR_WINDOWS)\\journal.o $(OBJDIR_WINDOWS)\\format.o $(OBJDIR_WINDOWS)\\dumper.o $(OBJDIR_WINDOWS)\\detector.o
 
 all: windows
 
@@ -47,9 +47,6 @@ windows: before_windows out_windows after_windows
 out_windows: before_windows $(OBJ_WINDOWS) $(DEP_WINDOWS)
 	$(LD) $(LIBDIR_WINDOWS) -o $(OUT_WINDOWS) $(OBJ_WINDOWS)  $(LDFLAGS_WINDOWS) $(LIB_WINDOWS)
 
-$(OBJDIR_WINDOWS)\\main.o: main.cpp
-	$(CXX) $(CFLAGS_WINDOWS) $(INC_WINDOWS) -c main.cpp -o $(OBJDIR_WINDOWS)\\main.o
-
 $(OBJDIR_WINDOWS)\\tstring.o: tstring.cpp
 	$(CXX) $(CFLAGS_WINDOWS) $(INC_WINDOWS) -c tstring.cpp -o $(OBJDIR_WINDOWS)\\tstring.o
 
@@ -59,8 +56,11 @@ $(OBJDIR_WINDOWS)\\status.o: status.cpp
 $(OBJDIR_WINDOWS)\\reader.o: reader.cpp
 	$(CXX) $(CFLAGS_WINDOWS) $(INC_WINDOWS) -c reader.cpp -o $(OBJDIR_WINDOWS)\\reader.o
 
-$(OBJDIR_WINDOWS)\\detector.o: detector.cpp
-	$(CXX) $(CFLAGS_WINDOWS) $(INC_WINDOWS) -c detector.cpp -o $(OBJDIR_WINDOWS)\\detector.o
+$(OBJDIR_WINDOWS)\\main.o: main.cpp
+	$(CXX) $(CFLAGS_WINDOWS) $(INC_WINDOWS) -c main.cpp -o $(OBJDIR_WINDOWS)\\main.o
+
+$(OBJDIR_WINDOWS)\\charsets.o: charsets.cpp
+	$(CXX) $(CFLAGS_WINDOWS) $(INC_WINDOWS) -c charsets.cpp -o $(OBJDIR_WINDOWS)\\charsets.o
 
 $(OBJDIR_WINDOWS)\\journal.o: journal.cpp
 	$(CXX) $(CFLAGS_WINDOWS) $(INC_WINDOWS) -c journal.cpp -o $(OBJDIR_WINDOWS)\\journal.o
@@ -70,6 +70,9 @@ $(OBJDIR_WINDOWS)\\format.o: format.cpp
 
 $(OBJDIR_WINDOWS)\\dumper.o: dumper.cpp
 	$(CXX) $(CFLAGS_WINDOWS) $(INC_WINDOWS) -c dumper.cpp -o $(OBJDIR_WINDOWS)\\dumper.o
+
+$(OBJDIR_WINDOWS)\\detector.o: detector.cpp
+	$(CXX) $(CFLAGS_WINDOWS) $(INC_WINDOWS) -c detector.cpp -o $(OBJDIR_WINDOWS)\\detector.o
 
 clean_windows: 
 	cmd /c del /f $(OBJ_WINDOWS) $(OUT_WINDOWS)
