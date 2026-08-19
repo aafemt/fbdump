@@ -314,7 +314,7 @@ constexpr bool checkList()
 	{
 		for (size_t j = 0; j < i; ++j)
 		{
-			if (std::string_view(CharSetList[i].name) == CharSetList[j].iconvName)
+			if (CharSetList[j].iconvName != nullptr && std::string_view(CharSetList[i].name) == CharSetList[j].iconvName)
 			{
 				return false;
 			}
