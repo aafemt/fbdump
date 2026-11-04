@@ -1,6 +1,7 @@
 #include <ios>
 #include <stdexcept>
 #include <errno.h>
+#include <fcntl.h>
 #include <unistd.h>
 
 #include "reader.h"

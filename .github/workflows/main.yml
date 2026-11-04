@@ -11,7 +11,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@main
     - name: Build
-      run: make -f fbdump.mak windows
+      run: make -f fbdump.mak.windows
     - name: Create artifact
       uses: actions/upload-artifact@main
       with:

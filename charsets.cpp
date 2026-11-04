@@ -12,6 +12,7 @@
 #include <memory>
 #include <string.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #ifdef __WIN32__
 
@@ -41,8 +42,11 @@
 #endif
 
 #if !defined(__WIN32__) || defined(TESTING)
+#include <errno.h>
 #include <iconv.h>
 #endif
+
+#include <winnls.h>
 
 #include "charsets.h"
 //#include "exceptions.h"
@@ -392,7 +396,7 @@ bool convertToUtf8(const unsigned char* from, size_t length, std::string& to, un
 	}
 
 	char buf[100];
-	char* source = const_cast<char*>(from);
+	char* source = const_cast<char*>(reinterpret_cast<const char*>(from));
 	while (length > 0)
 	{
 		char* p = buf;
@@ -402,7 +406,7 @@ bool convertToUtf8(const unsigned char* from, size_t length, std::string& to, un
 		{
 			if (errno != E2BIG)
 			{
-				fprintf(stderrr, "Iconv error %u\n", errno);
+				fprintf(stderr, "Iconv error %u\n", errno);
 				return false;
 			}
 	  }

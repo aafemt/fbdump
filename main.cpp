@@ -7,6 +7,11 @@
 #include <tchar.h>
 #include <locale.h>
 
+#ifndef __WIN32__
+#include <langinfo.h>
+#include <unistd.h>
+#endif
+
 #include "fbinterface.h"
 #include "tstring.h"
 #include "reader.h"
@@ -35,6 +40,7 @@ bool verbose = false;
 
 int _tmain(int argc, _TCHAR* argv[])
 {
+#ifdef __WIN32__
 	struct CPHolder
 	{
 		UINT oldCP;
@@ -50,6 +56,17 @@ int _tmain(int argc, _TCHAR* argv[])
 		}
 
 	} cpHolder;
+#else
+	if (isatty(STDOUT_FILENO))
+	{
+		const char* charset = nl_langinfo(CODESET);
+		if (strcasecmp(charset, "UTF8") != 0 && strcasecmp(charset, "UTF-8"))
+		{
+			fprintf(stderr, "Warning: console charset is not UTF-8, non-ASCII data will be displayed wrongly\n");
+		}
+	}
+	// else it is redirected somewhere so we don't care.
+#endif
 
 	try
 	{

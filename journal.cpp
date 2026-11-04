@@ -34,7 +34,7 @@ namespace Journal
 		{
 			fprintf(stderr, "fstat error %u\n", errno);
 		}
-		printf("Replication journal %s, length %llu\n", to_string(file.fileName).c_str(), st.st_size);
+		printf("Replication journal %s, length %llu\n", to_string(file.fileName).c_str(), (unsigned long long)st.st_size);
 		char signature[SignatureSize];
 		// Here we read separate pieces of header instead of whole one to handle different endianness
 		file.readBuffer(signature, SignatureSize);
@@ -92,9 +92,9 @@ namespace Journal
 				uuid.Data4[3], uuid.Data4[4], uuid.Data4[5],
 				uuid.Data4[6], uuid.Data4[7]);
 		const uint64_t sequence = file.getInt64();
-		printf("\tSequence: %llu\n", sequence);
+		printf("\tSequence: %" PRIu64 "\n", sequence);
 		uint64_t length = file.getInt64();
-		printf("\tLength: %llu\n", length);
+		printf("\tLength: %" PRIu64 "\n", length);
 		length -= sizeof(SegmentHeader);
 
 		// Physical size of file can be bigger than size of data inside
@@ -105,7 +105,7 @@ namespace Journal
 			uint16_t protocol = file.getInt16();
 			uint16_t flags = file.getInt16();
 			uint32_t blockLength = file.getInt32();
-			printf("Transaction number %llu, protocol %x, flags %04x (", transactionNumber, protocol, flags);
+			printf("Transaction number %" PRIu64 ", protocol %x, flags %04x (", transactionNumber, protocol, flags);
 			bool comma = false;
 			if (flags & BLOCK_BEGIN_TRANS)
 			{
@@ -355,7 +355,7 @@ namespace Journal
 						}
 						uint64_t value = file.getInt64();
 						opLength += 4 + 8;
-						printf("\tSet sequence %s to %lld\n", name.c_str(), value);
+						printf("\tSet sequence %s to %" PRId64 "\n", name.c_str(), value);
 						break;
 					}
 				case opExecuteSqlIntl:

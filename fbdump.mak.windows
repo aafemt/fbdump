@@ -20,17 +20,17 @@ LIB =
 LDFLAGS = 
 
 INC_WINDOWS = $(INC)
-CFLAGS_WINDOWS = $(CFLAGS) -O3 -municode -D_UNICODE
+CFLAGS_WINDOWS = $(CFLAGS) -O3 -mthreads -municode -D_UNICODE
 RESINC_WINDOWS = $(RESINC)
 RCFLAGS_WINDOWS = $(RCFLAGS)
 LIBDIR_WINDOWS = $(LIBDIR)
 LIB_WINDOWS = $(LIB)
-LDFLAGS_WINDOWS = $(LDFLAGS) -municode -static-libgcc -static-libstdc++
+LDFLAGS_WINDOWS = $(LDFLAGS) -mthreads -static-libstdc++ -static-libgcc -municode
 OBJDIR_WINDOWS = build\\obj
 DEP_WINDOWS = 
 OUT_WINDOWS = build\\fbdump.exe
 
-OBJ_WINDOWS = $(OBJDIR_WINDOWS)\\tstring.o $(OBJDIR_WINDOWS)\\status.o $(OBJDIR_WINDOWS)\\reader.o $(OBJDIR_WINDOWS)\\main.o $(OBJDIR_WINDOWS)\\charsets.o $(OBJDIR_WINDOWS)\\journal.o $(OBJDIR_WINDOWS)\\format.o $(OBJDIR_WINDOWS)\\dumper.o $(OBJDIR_WINDOWS)\\detector.o
+OBJ_WINDOWS = $(OBJDIR_WINDOWS)\\tstring.o $(OBJDIR_WINDOWS)\\status.o $(OBJDIR_WINDOWS)\\reader.o $(OBJDIR_WINDOWS)\\main.o $(OBJDIR_WINDOWS)\\journal.o $(OBJDIR_WINDOWS)\\format.o $(OBJDIR_WINDOWS)\\dumper.o $(OBJDIR_WINDOWS)\\detector.o $(OBJDIR_WINDOWS)\\charsets.o
 
 all: windows
 
@@ -59,9 +59,6 @@ $(OBJDIR_WINDOWS)\\reader.o: reader.cpp
 $(OBJDIR_WINDOWS)\\main.o: main.cpp
 	$(CXX) $(CFLAGS_WINDOWS) $(INC_WINDOWS) -c main.cpp -o $(OBJDIR_WINDOWS)\\main.o
 
-$(OBJDIR_WINDOWS)\\charsets.o: charsets.cpp
-	$(CXX) $(CFLAGS_WINDOWS) $(INC_WINDOWS) -c charsets.cpp -o $(OBJDIR_WINDOWS)\\charsets.o
-
 $(OBJDIR_WINDOWS)\\journal.o: journal.cpp
 	$(CXX) $(CFLAGS_WINDOWS) $(INC_WINDOWS) -c journal.cpp -o $(OBJDIR_WINDOWS)\\journal.o
 
@@ -73,6 +70,9 @@ $(OBJDIR_WINDOWS)\\dumper.o: dumper.cpp
 
 $(OBJDIR_WINDOWS)\\detector.o: detector.cpp
 	$(CXX) $(CFLAGS_WINDOWS) $(INC_WINDOWS) -c detector.cpp -o $(OBJDIR_WINDOWS)\\detector.o
+
+$(OBJDIR_WINDOWS)\\charsets.o: charsets.cpp
+	$(CXX) $(CFLAGS_WINDOWS) $(INC_WINDOWS) -c charsets.cpp -o $(OBJDIR_WINDOWS)\\charsets.o
 
 clean_windows: 
 	cmd /c del /f $(OBJ_WINDOWS) $(OUT_WINDOWS)
