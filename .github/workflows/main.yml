@@ -20,3 +20,26 @@ jobs:
         overwrite: true
         if-no-files-found: error
 
+  build-linux:
+    name: Linux build
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout main
+      uses: actions/checkout@main
+      with:
+        path: fbdump
+    - name: Checkout wincompat
+      uses: actions/checkout@main
+      with:
+        repository: aafemt/wincompat
+        path: wincompat
+    - name: Build
+      run: make -f fbdump.mak.linux
+    - name: Create artifact
+      uses: actions/upload-artifact@main
+      with:
+        name: linux-executable
+        path: build/fbdump
+        overwrite: true
+        if-no-files-found: error
