@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 
 #include <memory>
+#include <stdexcept>
 
 #include "database.h"
 #include "static_exception.h"
