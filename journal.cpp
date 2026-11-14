@@ -1,4 +1,5 @@
 #define __USE_MINGW_ANSI_STDIO 1
+#define __STDC_FORMAT_MACROS
 #include <stdio.h>
 #include <stdexcept>
 #include <sstream>

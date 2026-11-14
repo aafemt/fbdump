@@ -58,6 +58,8 @@
 		</Unit>
 		<Unit filename="charsets.cpp" />
 		<Unit filename="charsets.h" />
+		<Unit filename="database.cpp" />
+		<Unit filename="database.h" />
 		<Unit filename="detector.cpp" />
 		<Unit filename="detector.h" />
 		<Unit filename="dumper.cpp" />

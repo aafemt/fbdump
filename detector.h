@@ -5,7 +5,8 @@
 enum class FileType
 {
 	Unknown,
-	Journal
+	Journal,
+	Database
 };
 
 FileType detectFileType(Reader& file);

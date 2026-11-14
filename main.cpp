@@ -17,6 +17,7 @@
 #include "reader.h"
 #include "detector.h"
 #include "journal.h"
+#include "database.h"
 #include "status.h"
 
 void help()
@@ -232,6 +233,9 @@ int _tmain(int argc, _TCHAR* argv[])
 		{
 		case FileType::Journal:
 			Journal::dumpIt(file, att);
+			break;
+		case FileType::Database:
+			Database::dumpIt(file);
 			break;
 		case FileType::Unknown:
 			printf("Unable to determine type of file \"%s\", perhaps it is damaged.\n", to_string(fileName).c_str());
