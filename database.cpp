@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 
 #include <memory>
+#include <map>
 #include <stdexcept>
 
 #include "database.h"
@@ -17,11 +18,11 @@ namespace Database
 		static constexpr const char* const typeNames[] =
 		{
 			"unused",
-			"header",
+			"Header Page",
 			"PIP",
 			"TIP",
 			"Pointer Page",
-			"Data",
+			"Data Page",
 			"Index Root",
 			"Index Page",
 			"BLOB Page",
@@ -220,20 +221,33 @@ namespace Database
 		// Now we have enough info to go through whole database dumping every single page
 		std::unique_ptr<unsigned char[]> buffer(new unsigned char[pageSize]);
 		unsigned realPageNumber = 0;
+		// This map is ordered to produce ordered stats without further sort.
+		// Though perhaps unordered_map + sort could be faster.
+		std::map<uint8_t, unsigned> stats;
+
 		while (!file.eof())
 		{
 			file.readBuffer(buffer.get(), pageSize);
 
 			// Dump header
 			const unsigned char* p = buffer.get(); // Just for convenience
+			const uint8_t pageType = p[offsetof(Ods::pag, pag_type)];
 			printf("Page %u (%u), type %s, flags %x (%s), written %u times, SCN %u\n",
 					realPageNumber, file.gatherInt32(p + offsetof(Ods::pag, pag_pageno)),
-					decodePageType(p[offsetof(Ods::pag, pag_type)]),
-					p[offsetof(Ods::pag, pag_flags)], decodeFlags(p[offsetof(Ods::pag, pag_type)], p[offsetof(Ods::pag, pag_flags)]).c_str(),
+					decodePageType(pageType),
+					p[offsetof(Ods::pag, pag_flags)], decodeFlags(pageType, p[offsetof(Ods::pag, pag_flags)]).c_str(),
 					file.gatherInt32(p + offsetof(Ods::pag, pag_generation)),
 					file.gatherInt32(p + offsetof(Ods::pag, pag_scn)));
 
+			stats[pageType]++;
+
 			++realPageNumber;
+		}
+
+		printf("\nSummary:\n");
+		for (const auto& itr : stats)
+		{
+			printf("\t%s: %u (%0.2f%%, %0.2fmb)\n", decodePageType(itr.first), itr.second, itr.second * 100.0 / realPageNumber, itr.second / (1024.0 * 1024.0) * pageSize);
 		}
 	}
 }
