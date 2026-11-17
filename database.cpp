@@ -208,7 +208,9 @@ namespace Database
 			dumper.reset(new Ods13);
 			break;
 		default:
-			throw std::runtime_error(std::string("Unsupported ODS ") + std::to_string(ods) + " found");
+			fprintf(stderr, "Warning: unsupported ODS %u found, output may be incorrect\n", ods);
+			dumper.reset(new OdsDumper);
+			break;
 		}
 
 		unsigned pageSize = dumper->getPageSize(file);
