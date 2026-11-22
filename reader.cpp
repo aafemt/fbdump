@@ -166,6 +166,44 @@ void Reader::gatherInt128(const unsigned char* from, FB_I128& to) const
 	}
 }
 
+long long Reader::gatherInt(const unsigned char* from, unsigned length) const
+{
+	switch (length)
+	{
+	case 1:
+		{
+			const int8_t value = *from;
+			return value;
+		}
+	case 2:
+		{
+			const int16_t value = gatherInt16(from);
+			return value;
+		}
+	case 4:
+		{
+			const int32_t value = gatherInt32(from);
+			return value;
+		}
+	case 8:
+		{
+			const int64_t value = gatherInt64(from);
+			return value;
+		}
+	default:
+		throw std::runtime_error(std::string("Gathering of ") + std::to_string(length) + " bits integer is not supported");
+	}
+}
+
+void Reader::gatherUUID(const unsigned char* from, UUID& to) const
+{
+	to.Data1 = gatherInt32(from + offsetof(UUID, Data1));
+	to.Data2 = gatherInt16(from + offsetof(UUID, Data2));
+	to.Data3 = gatherInt16(from + offsetof(UUID, Data3));
+	memcpy(to.Data4, from + offsetof(UUID, Data4), sizeof(UUID::Data4));
+}
+
+
 bool Reader::eof()
 {
 	if (readPoint < buffer + dataSize)

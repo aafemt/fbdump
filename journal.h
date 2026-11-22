@@ -1,7 +1,6 @@
 #pragma once
 
 #include <stdint.h>
-#include <rpc.h>
 
 #include "fbinterface.h"
 #include "reader.h"

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <rpc.h>
 
 #include "tstring.h"
 #include "dumper.h"
@@ -37,4 +38,7 @@ struct Reader
 	uint32_t gatherInt32(const unsigned char* from) const;
 	uint64_t gatherInt64(const unsigned char* from) const;
 	void gatherInt128(const unsigned char* from, FB_I128& to) const;
+	// This routine returns signed value as portable_integer does
+	long long gatherInt(const unsigned char* from, unsigned length) const;
+	void gatherUUID(const unsigned char* from, UUID& to) const;
 };
