@@ -372,10 +372,10 @@ namespace Database
 			printf("\tFile sequence number\t%u\n", f.gatherInt16(buffer + offsetof(Ods::header_page13, hdr_sequence)));
 			printf("\tNext attachment ID\t%llu\n", (unsigned long long)f.gatherInt16(buffer + offsetof(Ods::header_page13, hdr_att_high)) << 32 |
 																  f.gatherInt32(buffer + offsetof(Ods::header_page13, hdr_attachment_id)));
-			printf("\tImplementation\t\tHW=%s %s-endian OS=%s CC=%s\n", decodeHardware(f.buffer[offsetof(Ods::header_page13, hdr_cpu)]),
-																	  (f.buffer[offsetof(Ods::header_page13, hdr_compatibility_flags)] & 1) ? "big" : "little",
-																	  decodeOS(f.buffer[offsetof(Ods::header_page13, hdr_os)]),
-																	  decodeCompiler(f.buffer[offsetof(Ods::header_page13, hdr_cc)]));
+			printf("\tImplementation\t\tHW=%s %s-endian OS=%s CC=%s\n", decodeHardware(buffer[offsetof(Ods::header_page13, hdr_cpu)]),
+																	  (buffer[offsetof(Ods::header_page13, hdr_compatibility_flags)] & 1) ? "big" : "little",
+																	  decodeOS(buffer[offsetof(Ods::header_page13, hdr_os)]),
+																	  decodeCompiler(buffer[offsetof(Ods::header_page13, hdr_cc)]));
 			printf("\tShadow count\t\t%u\n", f.gatherInt32(buffer + offsetof(Ods::header_page13, hdr_shadow_count)));
 			printf("\tPage buffers\t\t%u\n", f.gatherInt32(buffer + offsetof(Ods::header_page13, hdr_page_buffers)));
 			printf("\tNext header page\t%u\n", f.gatherInt32(buffer + offsetof(Ods::header_page13, hdr_next_page)));
@@ -391,7 +391,7 @@ namespace Database
 			uint16_t flags = f.gatherInt16(buffer + offsetof(Ods::header_page13, hdr_flags));
 			printf("\tAttributes\t\t%x (%s)\n", flags, decodeHeaderFlags(flags).c_str());
 			printf("\tCrypt page\t\t%u\n", f.gatherInt32(buffer + offsetof(Ods::header_page13, hdr_crypt_page)));
-			printf("\tCrypt plugin\t\t\"%.32s\"\n", f.buffer + offsetof(Ods::header_page13, hdr_crypt_plugin));
+			printf("\tCrypt plugin\t\t\"%.32s\"\n", buffer + offsetof(Ods::header_page13, hdr_crypt_plugin));
 			printf("\tVariable header data:\n");
 			for (ptrdiff_t i = offsetof(Ods::header_page13, hdr_data); i < clumpletEnd; )
 			{
@@ -430,7 +430,7 @@ namespace Database
 
 				if (clumpletType <= HDR_max)
 				{
-					printf("\t\t%s", clumpletNames[clumpletType]);
+					printf("\t\t%s\t", clumpletNames[clumpletType]);
 				}
 				else
 				{
@@ -476,13 +476,13 @@ namespace Database
 								{
 									if (length != sizeof(UUID))
 									{
-										fprintf(stderr, "Size of backup UUID is not 16\n");
+										fprintf(stderr, "Size of backup UUID is %u, not 16\n", length);
 									}
 									else
 									{
 										UUID uuid;
 										f.gatherUUID(buffer + i, uuid);
-										printf("\tUUID: {%08X-%04hX-%04hX-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+										printf("{%08X-%04hX-%04hX-%02X%02X-%02X%02X%02X%02X%02X%02X}",
 												(unsigned)uuid.Data1,
 												uuid.Data2,
 												uuid.Data3,
