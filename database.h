@@ -31,6 +31,14 @@ namespace Ods
 	inline constexpr uint8_t pag_scns			= 10;		// SCN's inventory page
 	inline constexpr uint8_t pag_max			= 10;		// Max page type
 
+	inline constexpr uint16_t hdr_active_shadow		= 0x1;		// 1	file is an active shadow file
+	inline constexpr uint16_t hdr_force_write		= 0x2;		// 2	database is forced write
+	inline constexpr uint16_t hdr_crypt_process		= 0x4;		// 4	Encryption status is changing now
+	inline constexpr uint16_t hdr_no_reserve		= 0x8;		// 8	don't reserve space for versions
+	inline constexpr uint16_t hdr_SQL_dialect_3		= 0x10;		// 16	database SQL dialect 3
+	inline constexpr uint16_t hdr_read_only			= 0x20;		// 32	Database is ReadOnly. If not set, DB is RW
+	inline constexpr uint16_t hdr_encrypted			= 0x40;		// 64	Database is encrypted
+
 	struct header_page13
 	{
 		pag hdr_header;

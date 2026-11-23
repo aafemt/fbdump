@@ -253,31 +253,31 @@ namespace Database
 			result += name;
 		};
 
-		if (flags & 0x1)	// hdr_active_shadow	file is an active shadow file
+		if (flags & Ods::hdr_active_shadow)
 		{
 			addName("active shadow");
 		}
-		if (flags & 0x2)	// hdr_force_write	database is forced write
+		if (flags & Ods::hdr_force_write)
 		{
 			addName("force writes");
 		}
-		if (flags & 0x4)	// const USHORT hdr_crypt_process	Encryption status is changing now
+		if (flags & Ods::hdr_crypt_process)
 		{
 			addName("crypt in process");
 		}
-		if (flags & 0x8)	// hdr_no_reserve	don't reserve space for versions
+		if (flags & Ods::hdr_no_reserve)
 		{
 			addName("no reserve");
 		}
-		if (flags & 0x10)	// hdr_SQL_dialect_3	database SQL dialect 3
+		if (flags & Ods::hdr_SQL_dialect_3)
 		{
 			addName("dialect 3");
 		}
-		if (flags & 0x20)	// hdr_read_only	Database is ReadOnly. If not set, DB is RW
+		if (flags & Ods::hdr_read_only)
 		{
 			addName("read only");
 		}
-		if (flags & 0x40)	// hdr_encrypted	Database is encrypted
+		if (flags & Ods::hdr_encrypted)
 		{
 			addName("encrypted");
 		}
@@ -579,24 +579,29 @@ namespace Database
 			// Dump header
 			const unsigned char* p = buffer.get(); // Just for convenience
 			const uint8_t pageType = p[offsetof(Ods::pag, pag_type)];
+			const uint8_t flags = p[offsetof(Ods::pag, pag_flags)];
 			printf("Page %u (%u), type %s, flags %x (%s), written %u times, SCN %u\n",
 					realPageNumber, file.gatherInt32(p + offsetof(Ods::pag, pag_pageno)),
 					decodePageType(pageType),
-					p[offsetof(Ods::pag, pag_flags)], decodeFlags(pageType, p[offsetof(Ods::pag, pag_flags)]).c_str(),
+					flags, decodeFlags(pageType, flags).c_str(),
 					file.gatherInt32(p + offsetof(Ods::pag, pag_generation)),
 					file.gatherInt32(p + offsetof(Ods::pag, pag_scn)));
 
 			stats[pageType]++;
 
-			switch (pageType)
+			if ((flags & Ods::hdr_encrypted) == 0)
 			{
-			case Ods::pag_header:
+				// Therre is no way to dump content of encrypted pages so far
+				switch (pageType)
 				{
-					dumper->dumpHeader(buffer.get());
+				case Ods::pag_header:
+					{
+						dumper->dumpHeader(buffer.get());
+						break;
+					}
+				default:
 					break;
 				}
-			default:
-				break;
 			}
 
 			++realPageNumber;
